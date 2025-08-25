@@ -1,0 +1,85 @@
+Documentação do projeto Nigéria. O que foi feito e o passo a passo. 
+
+# Dados importados do Kaggle.
+Conjunto de dados foi importado do kaggle no formato CSV. Os dados vieram brutos e completamente desorganizados. 
+O conjunto em geral aborda vendas de produtos de tecnologia em estados nigerianos. 
+
+Contém 9 Colunas no Total:
+- Customer Name
+- State
+- Product 
+- Units Sold
+- Unit Price 
+- Total Sale
+- Sale Date 
+- Sales Date
+- Sales Channel  
+- Order ID
+E 550 linhas no total.
+
+# Trasformação Python
+
+Ao abrir o conjunto de dados em uma tabela .xlsx, me deparei com diversas colunas com valores nulos e formato inconsistente 
+em colunas texto, numéricas e data. Para se ter uma ideia apenas 102 linhas das 550 estavam completamente preenchidas.
+
+
+De primeiro momento carreguei o dataset no jupyter notebook e transformei as colunas texto e data. 
+ Texto: Letras minúsculas e maiúsculas incorretamente e nomes de estados errados;
+ nas linhas qua não constavam Customer Name, Sales Channel e/ou Order ID completei com NO Name, Channel e/ou Order ID.
+ 
+ Data: Converti para o formato data, já que anteriormente estava no formato str. Também coloquei dia primeiro para se adequar
+ ao padrão BR.
+ 
+ # Carregamento dos dados no Power BI.
+ 
+ Ao terminar a transformação, pulei para o Power Query onde achei mais fácil a trasnformação das colunas int64. Por que?
+ 
+ De primeiro momento poderia completar as colunas apenas com á mediana global e seguir para as análises, todavia como comentei anteriormente
+ mais de 70% do dataset estava com dados faltante. Com isso, precisei de uma análise estatística mais minuciosa.
+ Segue os dados gerais antes de completar da coluna "Units Sold" nulos:
+ 
+ Média de Units sold: 46,86  - Após o tratamento dos dados: 45,13
+ Mediana: 47 - 43
+ Desvio padrão: 26,86 - 16,05
+ Valor máximo e mínimo respctivamente: 100 e 1 - Manteve
+ 
+ Ou seja, com um desvio padrão tão alto, minha abordagem foi fazer filtros específicos por State e Product para assim tirar e mediana.
+ Vai demorar mais tempo, porém os dados serão muito mais confiáveis. 
+ 
+ Ao analisar as colunas novamente, vamos fazer uma abordagem de hierarquia fallback, já que filtrando por state e product em algumas
+ ocasiões aparece apenas 2,3 ou 4 valores apenas. Sendo assim impossível tirar uma mediana que evite outliers. 
+ Minha decisão: Vamos filtrar apenas por produto e retirar a mediana. 
+ 
+ #Transformação no Excel
+ Como mencionei, preferi não transformar pelo jupyter notebook as colunas numéricas por que iriam requerer códigos que ainda não 
+ muita familiaridade. Optei pelo power query, mas mesmo assim para trasnformar está sendo um desafio. Pulei para o excel. 
+ 
+ O que fix para preencher os valores nulos: fiz uma medida DAX com a mediana geral e filtrei num gráfico de barras para vizualizar
+ a mediana de cada product. Ao ter esses números, vou preenchelos pelo Excel já que meu código DAX de preenchimento não está 
+ rodando. Código que tentei com dax:
+ 
+Units_Sold_Filled =
+VAR u = 'Vendas_Nigeria'[Units Sold]
+RETURN
+IF (
+    ISBLANK ( u ),
+    CALCULATE (
+        MEDIAN ( 'Vendas_Nigeria'[Units Sold] ),
+        ALLEXCEPT ( 'Vendas_Nigeria', 'Vendas_Nigeria'[Product] )
+    ),
+    u
+)
+
+ # Transformação definitiva dos nulos
+ As colunas "units sold" e "units price" eu filtrei por "product" e peguei a mediana de cada um preenchendo dentro do excel. 
+ Para a coluna "total sale", apenas realizei a medida dax para calcular as duas colunas e preencher com o resultado 
+ nas colunas em branco.
+ 
+ Criei uma coluna calculada nova para "total sale" com o nome "total sales original". Assim tendo tudo bem preenchido.
+ Código usado, terei que manter a coluna antiga:
+ Total Sales Original = 
+IF (
+    ISBLANK ( 'Tabela1'[AB_NãoUsar]),
+    'Tabela1'[Units Sold] * 'Tabela1'[Unit Price],
+    'Tabela1'[AB_NãoUsar]
+)
